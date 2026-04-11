@@ -1,138 +1,85 @@
-// Home page of the app.
-// Currently a demo placeholder "please wait" screen.
-// Replace this file with your actual app UI. Do not delete it to use some other file as homepage. Simply replace the entire contents of this file.
-
-import { useEffect, useMemo, useState } from 'react'
-import { Sparkles } from 'lucide-react'
-
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { HAS_TEMPLATE_DEMO, TemplateDemo } from '@/components/TemplateDemo'
-import { Button } from '@/components/ui/button'
-import { Toaster, toast } from '@/components/ui/sonner'
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
+import React, { useMemo } from 'react';
+import { format } from 'date-fns';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useStore, PulseType } from '@/lib/store';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+const AFFIRMATIONS = [
+  "My growth is non-linear but constant.",
+  "I lead with empathy and structural clarity.",
+  "Boundaries are my foundation for wellbeing.",
+  "I am the architect of my own career path.",
+  "Reflection is a strategic leadership tool.",
+  "I deserve the space I inhabit.",
+  "My voice carries weight and wisdom."
+];
 export function HomePage() {
-  const [coins, setCoins] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startedAt, setStartedAt] = useState<number | null>(null)
-  const [elapsedMs, setElapsedMs] = useState(0)
-
-  useEffect(() => {
-    if (!isRunning || startedAt === null) return
-
-    const t = setInterval(() => {
-      setElapsedMs(Date.now() - startedAt)
-    }, 250)
-
-    return () => clearInterval(t)
-  }, [isRunning, startedAt])
-
-  const formatted = useMemo(() => formatDuration(elapsedMs), [elapsedMs])
-
-  const onPleaseWait = () => {
-    setCoins((c) => c + 1)
-
-    if (!isRunning) {
-      // Resume from the current elapsed time
-      setStartedAt(Date.now() - elapsedMs)
-      setIsRunning(true)
-      toast.success('Building your app…', {
-        description: "Hang tight — we're setting everything up.",
-      })
-      return
-    }
-
-    setIsRunning(false)
-    toast.info('Still working…', {
-      description: 'You can come back in a moment.',
-    })
-  }
-
-  const onReset = () => {
-    setCoins(0)
-    setIsRunning(false)
-    setStartedAt(null)
-    setElapsedMs(0)
-    toast('Reset complete')
-  }
-
-  const onAddCoin = () => {
-    setCoins((c) => c + 1)
-    toast('Coin added')
-  }
-
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const history = useStore(s => s.history);
+  const setPulse = useStore(s => s.setPulse);
+  const updateStreak = useStore(s => s.updateStreak);
+  const currentDay = history[today];
+  const pulse = currentDay?.pulse || null;
+  const pillars = currentDay?.pillars || {};
+  const completionCount = Object.values(pillars).filter(Boolean).length + (currentDay?.ptCompleted ? 1 : 0);
+  const progress = (completionCount / 7) * 100;
+  const affirmation = useMemo(() => {
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    return AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
+  }, []);
+  const handlePulseSelect = (p: PulseType) => {
+    setPulse(today, p);
+    updateStreak(today);
+  };
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-      <ThemeToggle />
-      <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-
-      <div className="text-center space-y-8 relative z-10 animate-fade-in w-full">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-            <Sparkles className="w-8 h-8 text-white rotating" />
-          </div>
+    <div className="p-6 space-y-10 animate-fade-in">
+      <header className="space-y-1">
+        <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest">{format(new Date(), 'EEEE, MMMM do')}</p>
+        <h1 className="text-2xl font-semibold">Morning, Assata</h1>
+      </header>
+      <section className="bg-assata-purple-bg p-6 rounded-2xl border-[0.5px] border-primary/10">
+        <Sparkles className="w-5 h-5 text-primary mb-3" />
+        <p className="font-serif text-lg italic text-primary/80 leading-relaxed">
+          "{affirmation}"
+        </p>
+      </section>
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Morning Pulse</h2>
+        <div className="flex gap-3">
+          {(['Abundance', 'Neutral', 'Depleted'] as PulseType[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePulseSelect(p)}
+              className={cn(
+                "flex-1 py-3 rounded-xl border-[0.5px] transition-all text-sm font-medium",
+                pulse === p 
+                  ? "bg-primary text-white border-primary" 
+                  : "bg-white text-muted-foreground border-border active:scale-95"
+              )}
+            >
+              {p}
+            </button>
+          ))}
         </div>
-
-        <div className="space-y-3">
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
+      </section>
+      <section className="space-y-4">
+        <div className="flex justify-between items-end">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Daily Progress</h2>
+          <span className="text-xs font-medium text-muted-foreground">{Math.round(progress)}%</span>
         </div>
-
-        {HAS_TEMPLATE_DEMO ? (
-          <div className="max-w-5xl mx-auto text-left">
-            <TemplateDemo />
+        <Progress value={progress} className="h-2" />
+        <div className="bg-white p-5 rounded-2xl border-[0.5px] border-border flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Daily Pillars</p>
+            <p className="text-xs text-muted-foreground">{completionCount} of 7 tasks complete</p>
           </div>
-        ) : (
-          <>
-            <div className="flex justify-center gap-4">
-              <Button
-                size="lg"
-                onClick={onPleaseWait}
-                className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-                aria-live="polite"
-              >
-                Please Wait
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div>
-                Time elapsed:{' '}
-                <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-              </div>
-              <div>
-                Coins:{' '}
-                <span className="font-medium tabular-nums text-foreground">{coins}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={onReset}>
-                Reset
-              </Button>
-              <Button variant="outline" size="sm" onClick={onAddCoin}>
-                Add Coin
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
-
-      <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-        <p>Powered by Cloudflare</p>
-      </footer>
-
-      <Toaster richColors closeButton />
+          <Button size="sm" variant="ghost" className="rounded-full h-8 w-8 p-0" asChild>
+            <Link to="/check-in"><ArrowRight className="w-4 h-4" /></Link>
+          </Button>
+        </div>
+      </section>
     </div>
-  )
+  );
 }
