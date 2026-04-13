@@ -2,50 +2,105 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 export type PillarId = 'body' | 'mind' | 'space' | 'connection' | 'pace' | 'voice';
 export type PulseType = 'Abundance' | 'Neutral' | 'Depleted';
+export type CapacityState = 'Restored' | 'Neutral' | 'Deficit';
+export interface CapacitySnapshot {
+  physical: CapacityState;
+  emotional: CapacityState;
+  mental: CapacityState;
+  relational: CapacityState;
+}
+export interface EnergyAudit {
+  id: string;
+  activity: string;
+  type: 'Restored' | 'Depleted';
+  action: 'Keep' | 'Modify' | 'Release';
+  timestamp: number;
+}
 export interface DailyState {
   pulse: PulseType | null;
+  capacity: CapacitySnapshot;
   pillars: Record<PillarId, boolean>;
   ptCompleted: boolean;
   advocacyLog: string;
+  energyAudits: EnergyAudit[];
 }
 export interface JournalState {
-  weekly: string;
-  monthly: string;
-  quarterly: string;
+  weekly: Record<string, string>; // YYYY-WW
+  monthly: Record<string, string>; // YYYY-MM
+  quarterly: Record<string, string>; // YYYY-QN
   patterns: string;
   circle: string;
+  narrative: string;
+}
+export interface LedgerQuarterly {
+  capacityEvidence: Record<string, string>; // physical, emotional, etc.
+  capacityStatus: Record<string, 'Yes' | 'No' | 'Uncertain'>;
+  costs: Record<string, 'Sacrifice' | 'Worth' | 'Restoration'>;
+  worthBeliefs: string[];
+  worthOrigin: string;
 }
 interface AssataStore {
-  history: Record<string, DailyState>; // Key: YYYY-MM-DD
+  history: Record<string, DailyState>; // YYYY-MM-DD
   journals: JournalState;
-  streak: number;
-  lastCheckIn: string | null;
+  ledger: Record<string, LedgerQuarterly>; // YYYY-QN
+  warningSigns: string[];
+  notificationTime: string;
+  streak: {
+    lastOpen: string | null;
+    currentStreak: number;
+    longestStreak: number;
+  };
   setPulse: (date: string, pulse: PulseType) => void;
+  setCapacity: (date: string, capacity: Partial<CapacitySnapshot>) => void;
   togglePillar: (date: string, pillar: PillarId) => void;
   setPT: (date: string, completed: boolean) => void;
   setAdvocacy: (date: string, text: string) => void;
-  updateJournal: (key: keyof JournalState, text: string) => void;
+  addEnergyAudit: (date: string, audit: Omit<EnergyAudit, 'id' | 'timestamp'>) => void;
+  updateJournal: (type: keyof JournalState, key: string, text: string) => void;
+  updateNarrative: (text: string) => void;
+  setNotificationTime: (time: string) => void;
+  addWarningSign: (sign: string) => void;
   updateStreak: (date: string) => void;
+  updateLedger: (quarter: string, data: Partial<LedgerQuarterly>) => void;
 }
+const initialDaily = (): DailyState => ({
+  pulse: null,
+  capacity: { physical: 'Neutral', emotional: 'Neutral', mental: 'Neutral', relational: 'Neutral' },
+  pillars: { body: false, mind: false, space: false, connection: false, pace: false, voice: false },
+  ptCompleted: false,
+  advocacyLog: '',
+  energyAudits: []
+});
 export const useStore = create<AssataStore>()(
   persist(
     (set) => ({
       history: {},
       journals: {
-        weekly: '',
-        monthly: '',
-        quarterly: '',
+        weekly: {},
+        monthly: {},
+        quarterly: {},
         patterns: '',
         circle: '',
+        narrative: ''
       },
-      streak: 0,
-      lastCheckIn: null,
-      setPulse: (date, pulse) => set((state) => {
-        const current = state.history[date] || { pulse: null, pillars: { body: false, mind: false, space: false, connection: false, pace: false, voice: false }, ptCompleted: false, advocacyLog: '' };
-        return { history: { ...state.history, [date]: { ...current, pulse } } };
+      ledger: {},
+      warningSigns: [],
+      notificationTime: '07:00',
+      streak: { lastOpen: null, currentStreak: 0, longestStreak: 0 },
+      setPulse: (date, pulse) => set((state) => ({
+        history: { ...state.history, [date]: { ...(state.history[date] || initialDaily()), pulse } }
+      })),
+      setCapacity: (date, capacity) => set((state) => {
+        const current = state.history[date] || initialDaily();
+        return {
+          history: {
+            ...state.history,
+            [date]: { ...current, capacity: { ...current.capacity, ...capacity } }
+          }
+        };
       }),
       togglePillar: (date, pillar) => set((state) => {
-        const current = state.history[date] || { pulse: null, pillars: { body: false, mind: false, space: false, connection: false, pace: false, voice: false }, ptCompleted: false, advocacyLog: '' };
+        const current = state.history[date] || initialDaily();
         return {
           history: {
             ...state.history,
@@ -53,26 +108,60 @@ export const useStore = create<AssataStore>()(
           }
         };
       }),
-      setPT: (date, completed) => set((state) => {
-        const current = state.history[date] || { pulse: null, pillars: { body: false, mind: false, space: false, connection: false, pace: false, voice: false }, ptCompleted: false, advocacyLog: '' };
-        return { history: { ...state.history, [date]: { ...current, ptCompleted: completed } } };
-      }),
-      setAdvocacy: (date, text) => set((state) => {
-        const current = state.history[date] || { pulse: null, pillars: { body: false, mind: false, space: false, connection: false, pace: false, voice: false }, ptCompleted: false, advocacyLog: '' };
-        return { history: { ...state.history, [date]: { ...current, advocacyLog: text } } };
-      }),
-      updateJournal: (key, text) => set((state) => ({
-        journals: { ...state.journals, [key]: text }
+      setPT: (date, completed) => set((state) => ({
+        history: { ...state.history, [date]: { ...(state.history[date] || initialDaily()), ptCompleted: completed } }
       })),
-      updateStreak: (date) => set((state) => {
-        if (state.lastCheckIn === date) return state;
-        const last = state.lastCheckIn ? new Date(state.lastCheckIn) : null;
-        const current = new Date(date);
-        const diff = last ? (current.getTime() - last.getTime()) / (1000 * 3600 * 24) : 0;
-        const newStreak = diff === 1 ? state.streak + 1 : 1;
-        return { streak: newStreak, lastCheckIn: date };
+      setAdvocacy: (date, text) => set((state) => ({
+        history: { ...state.history, [date]: { ...(state.history[date] || initialDaily()), advocacyLog: text } }
+      })),
+      addEnergyAudit: (date, audit) => set((state) => {
+        const current = state.history[date] || initialDaily();
+        const newAudit: EnergyAudit = { ...audit, id: crypto.randomUUID(), timestamp: Date.now() };
+        return {
+          history: {
+            ...state.history,
+            [date]: { ...current, energyAudits: [...current.energyAudits, newAudit] }
+          }
+        };
       }),
+      updateJournal: (type, key, text) => set((state) => {
+        if (type === 'patterns' || type === 'circle' || type === 'narrative') {
+          return { journals: { ...state.journals, [type]: text } };
+        }
+        return {
+          journals: {
+            ...state.journals,
+            [type]: { ...((state.journals[type] as any) || {}), [key]: text }
+          }
+        };
+      }),
+      updateNarrative: (text) => set((state) => ({
+        journals: { ...state.journals, narrative: text }
+      })),
+      setNotificationTime: (time) => set({ notificationTime: time }),
+      addWarningSign: (sign) => set((state) => ({ warningSigns: [...state.warningSigns, sign] })),
+      updateStreak: (date) => set((state) => {
+        const { lastOpen, currentStreak, longestStreak } = state.streak;
+        if (lastOpen === date) return state;
+        let newStreak = 1;
+        if (lastOpen) {
+          const lastDate = new Date(lastOpen);
+          const currDate = new Date(date);
+          const diffDays = Math.floor((currDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+          if (diffDays === 1) newStreak = currentStreak + 1;
+        }
+        return {
+          streak: {
+            lastOpen: date,
+            currentStreak: newStreak,
+            longestStreak: Math.max(longestStreak, newStreak)
+          }
+        };
+      }),
+      updateLedger: (quarter, data) => set((state) => ({
+        ledger: { ...state.ledger, [quarter]: { ...(state.ledger[quarter] || { capacityEvidence: {}, capacityStatus: {}, costs: {}, worthBeliefs: [], worthOrigin: '' }), ...data } }
+      })),
     }),
-    { name: 'assata-storage' }
+    { name: 'assata-storage-v2' }
   )
 );

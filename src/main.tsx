@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,13 +10,25 @@ import { CheckInPage } from '@/pages/CheckInPage';
 import { FramesPage } from '@/pages/FramesPage';
 import { CommitmentsPage } from '@/pages/CommitmentsPage';
 import { InsightsPage } from '@/pages/InsightsPage';
+import { LedgerPage } from '@/pages/LedgerPage';
+import { useStore } from '@/lib/store';
 import '@/index.css';
+const DEFAULT_NARRATIVE = `2026 STRATEGIC NARRATIVE: I am transitioning into a season of deep structural clarity. My leadership is characterized by the Architect's precision and the Nurturer's heart. In 2026, I will focus on sustainable growth, prioritizing relational depth over transactional speed. My worth is inherent, not earned through exhaustion.`;
 const queryClient = new QueryClient();
-const Root = () => (
-  <MobileLayout>
-    <Outlet />
-  </MobileLayout>
-);
+export function Root() {
+  const narrative = useStore(s => s.journals.narrative);
+  const updateNarrative = useStore(s => s.updateNarrative);
+  useEffect(() => {
+    if (!narrative) {
+      updateNarrative(DEFAULT_NARRATIVE);
+    }
+  }, [narrative, updateNarrative]);
+  return (
+    <MobileLayout>
+      <Outlet />
+    </MobileLayout>
+  );
+}
 const router = createBrowserRouter([
   {
     path: "/",
@@ -27,6 +39,7 @@ const router = createBrowserRouter([
       { path: "/check-in", element: <CheckInPage /> },
       { path: "/frames", element: <FramesPage /> },
       { path: "/commitments", element: <CommitmentsPage /> },
+      { path: "/ledger", element: <LedgerPage /> },
       { path: "/insights", element: <InsightsPage /> },
     ]
   },
