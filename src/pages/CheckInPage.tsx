@@ -36,6 +36,12 @@ export function CheckInPage() {
     setNewAudit({ activity: '', type: 'Restored', action: 'Keep' });
     toast.success('Energy audit added');
   };
+  const handleOpenLimber = () => {
+    toast('Opening Limber...');
+    window.location.href = 'limber://checkin';
+    setTimeout(() => window.open('https://limberjack.com', '_blank'), 2000);
+  };
+
   const handleSaveAll = () => {
     toast.success('Daily check-in saved ✓');
   };
@@ -147,11 +153,7 @@ export function CheckInPage() {
               />
               <span className="text-sm font-medium">Daily Routine</span>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs font-semibold text-primary/70 h-8" asChild>
-              <a href="https://www.limberhealth.com" target="_blank" rel="noopener noreferrer">
-                Open Limber <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            </Button>
+            <Button onClick={handleOpenLimber} variant="ghost" size="sm" className="text-xs font-semibold text-primary/70 h-8 px-3 flex items-center gap-1">Open Limber <ExternalLink className="w-3 h-3 ml-1" /></Button>
           </div>
         </section>
         <section className="space-y-4 pb-4">

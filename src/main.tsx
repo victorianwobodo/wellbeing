@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+
+declare global {
+  interface Window {
+    _assataRoot: ReturnType<typeof createRoot> | null;
+  }
+}
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -45,9 +51,12 @@ const router = createBrowserRouter([
   },
 ]);
 const container = document.getElementById('root');
-if (container && !container.hasAttribute('data-rendered')) {
-  container.setAttribute('data-rendered', 'true');
-  createRoot(container).render(
+if (container) {
+  let root = window._assataRoot;
+  if (!root) {
+    root = window._assataRoot = createRoot(container);
+  }
+  root.render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <ErrorBoundary>
