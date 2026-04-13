@@ -25,24 +25,24 @@ export interface DailyState {
   energyAudits: EnergyAudit[];
 }
 export interface JournalState {
-  weekly: Record<string, string>; // YYYY-WW
-  monthly: Record<string, string>; // YYYY-MM
-  quarterly: Record<string, string>; // YYYY-QN
+  weekly: Record<string, string>;
+  monthly: Record<string, string>;
+  quarterly: Record<string, string>;
   patterns: string;
   circle: string;
   narrative: string;
 }
 export interface LedgerQuarterly {
-  capacityEvidence: Record<string, string>; // physical, emotional, etc.
+  capacityEvidence: Record<string, string>;
   capacityStatus: Record<string, 'Yes' | 'No' | 'Uncertain'>;
   costs: Record<string, 'Sacrifice' | 'Worth' | 'Restoration'>;
   worthBeliefs: string[];
   worthOrigin: string;
 }
 interface AssataStore {
-  history: Record<string, DailyState>; // YYYY-MM-DD
+  history: Record<string, DailyState>;
   journals: JournalState;
-  ledger: Record<string, LedgerQuarterly>; // YYYY-QN
+  ledger: Record<string, LedgerQuarterly>;
   warningSigns: string[];
   notificationTime: string;
   streak: {
@@ -63,7 +63,7 @@ interface AssataStore {
   updateStreak: (date: string) => void;
   updateLedger: (quarter: string, data: Partial<LedgerQuarterly>) => void;
 }
-const initialDaily = (): DailyState => ({
+export const initialDaily = (): DailyState => ({
   pulse: null,
   capacity: { physical: 'Neutral', emotional: 'Neutral', mental: 'Neutral', relational: 'Neutral' },
   pillars: { body: false, mind: false, space: false, connection: false, pace: false, voice: false },

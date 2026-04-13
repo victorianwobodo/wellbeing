@@ -16,7 +16,8 @@ import '@/index.css';
 const DEFAULT_NARRATIVE = `2026 STRATEGIC NARRATIVE: I am transitioning into a season of deep structural clarity. My leadership is characterized by the Architect's precision and the Nurturer's heart. In 2026, I will focus on sustainable growth, prioritizing relational depth over transactional speed. My worth is inherent, not earned through exhaustion.`;
 const queryClient = new QueryClient();
 export function Root() {
-  const narrative = useStore(s => s.journals.narrative);
+  const journals = useStore(s => s.journals);
+  const narrative = journals.narrative;
   const updateNarrative = useStore(s => s.updateNarrative);
   useEffect(() => {
     if (!narrative) {
