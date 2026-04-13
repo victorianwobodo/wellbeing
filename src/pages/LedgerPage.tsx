@@ -12,33 +12,30 @@ const COST_AREAS = [
 export function LedgerPage() {
   const today = useMemo(() => new Date(), []);
   const quarter = useMemo(() => `${today.getFullYear()}-Q${Math.floor(today.getMonth() / 3) + 1}`, [today]);
-  const ledgers = useStore(s => s.ledger);
-  const ledger = ledgers[quarter] || { 
-    capacityEvidence: {}, 
-    capacityStatus: {}, 
-    costs: {}, 
-    worthBeliefs: [], 
-    worthOrigin: '' 
-  };
+  const capacityEvidence = useStore(s => s.ledger[quarter]?.capacityEvidence ?? {});
+  const capacityStatus = useStore(s => s.ledger[quarter]?.capacityStatus ?? {});
+  const costs = useStore(s => s.ledger[quarter]?.costs ?? {});
+  const worthBeliefs = useStore(s => s.ledger[quarter]?.worthBeliefs ?? []);
+  const worthOrigin = useStore(s => s.ledger[quarter]?.worthOrigin ?? '');
+  const historyEntries = useStore(s => Object.entries(s.history));
   const updateLedger = useStore(s => s.updateLedger);
-  const history = useStore(s => s.history);
   const handleStatusToggle = (key: string) => {
     const cycle = ['Uncertain', 'Yes', 'No'] as const;
-    const current = ledger.capacityStatus[key] || 'Uncertain';
+    const current = capacityStatus[key] || 'Uncertain';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
-    updateLedger(quarter, { capacityStatus: { ...ledger.capacityStatus, [key]: next } });
+    updateLedger(quarter, { capacityStatus: { ...capacityStatus, [key]: next } });
   };
   const handleCostToggle = (area: string) => {
     const cycle = ['Restoration', 'Sacrifice', 'Worth'] as const;
-    const current = ledger.costs[area] || 'Restoration';
+    const current = costs[area] || 'Restoration';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
-    updateLedger(quarter, { costs: { ...ledger.costs, [area]: next } });
+    updateLedger(quarter, { costs: { ...costs, [area]: next } });
   };
   const recentHistory = useMemo(() => {
-    return Object.entries(history)
+    return historyEntries
       .sort((a, b) => b[0].localeCompare(a[0]))
       .slice(0, 15);
-  }, [history]);
+  }, [historyEntries]);
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12 space-y-12 animate-fade-in">
@@ -60,20 +57,20 @@ export function LedgerPage() {
                     onClick={() => handleStatusToggle(type)}
                     className={cn(
                       "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border-[0.5px] transition-all",
-                      ledger.capacityStatus[type] === 'Yes' ? "bg-assata-teal text-white border-assata-teal" :
-                      ledger.capacityStatus[type] === 'No' ? "bg-assata-coral text-white border-assata-coral" :
+                      capacityStatus[type] === 'Yes' ? "bg-assata-teal text-white border-assata-teal" :
+                      capacityStatus[type] === 'No' ? "bg-assata-coral text-white border-assata-coral" :
                       "bg-white text-muted-foreground border-border"
                     )}
                   >
-                    {ledger.capacityStatus[type] || 'Uncertain'}
+                    {capacityStatus[type] || 'Uncertain'}
                   </button>
                 </div>
                 <div className="p-4 pt-2">
                   <Textarea
                     placeholder="What is the evidence for this status?"
                     className="bg-transparent border-none resize-none p-0 min-h-[60px] text-sm focus-visible:ring-0"
-                    value={ledger.capacityEvidence[type] || ''}
-                    onChange={(e) => updateLedger(quarter, { capacityEvidence: { ...ledger.capacityEvidence, [type]: e.target.value } })}
+                    value={capacityEvidence[type] || ''}
+                    onChange={(e) => updateLedger(quarter, { capacityEvidence: { ...capacityEvidence, [type]: e.target.value } })}
                   />
                 </div>
               </div>
@@ -93,12 +90,12 @@ export function LedgerPage() {
                   onClick={() => handleCostToggle(area)}
                   className={cn(
                     "flex-shrink-0 min-w-[80px] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center border-[0.5px]",
-                    ledger.costs[area] === 'Sacrifice' ? "bg-assata-coral/10 text-assata-coral border-assata-coral/20" :
-                    ledger.costs[area] === 'Worth' ? "bg-assata-teal/10 text-assata-teal border-assata-teal/20" :
+                    costs[area] === 'Sacrifice' ? "bg-assata-coral/10 text-assata-coral border-assata-coral/20" :
+                    costs[area] === 'Worth' ? "bg-assata-teal/10 text-assata-teal border-assata-teal/20" :
                     "bg-gray-100 text-muted-foreground border-border"
                   )}
                 >
-                  {ledger.costs[area] || 'TBD'}
+                  {costs[area] || 'TBD'}
                 </button>
               </div>
             ))}
@@ -116,11 +113,11 @@ export function LedgerPage() {
                   <input
                     type="checkbox"
                     className="w-5 h-5 rounded border-assata-coral/30 text-assata-coral focus:ring-assata-coral mt-0.5"
-                    checked={ledger.worthBeliefs.includes(belief)}
+                    checked={worthBeliefs.includes(belief)}
                     onChange={(e) => {
                       const next = e.target.checked
-                        ? [...ledger.worthBeliefs, belief]
-                        : ledger.worthBeliefs.filter(b => b !== belief);
+                        ? [...worthBeliefs, belief]
+                        : worthBeliefs.filter(b => b !== belief);
                       updateLedger(quarter, { worthBeliefs: next });
                     }}
                   />
@@ -132,7 +129,7 @@ export function LedgerPage() {
               <p className="font-serif italic text-assata-coral/70">What is the origin of your primary worth-narrative?</p>
               <Textarea
                 className="bg-white/50 border-none rounded-xl p-4 text-sm min-h-[120px] focus-visible:ring-assata-coral/20"
-                value={ledger.worthOrigin}
+                value={worthOrigin}
                 onChange={(e) => updateLedger(quarter, { worthOrigin: e.target.value })}
               />
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { useStore, PillarId, initialDaily, EnergyAudit } from '@/lib/store';
+import { useStore, PillarId, EnergyAudit } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { Check, ExternalLink, Zap, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,16 +17,14 @@ const PILLARS: { id: PillarId; label: string; color: string; sub: string }[] = [
 ];
 export function CheckInPage() {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
-  const history = useStore(s => s.history);
+  const pillars = useStore(s => s.history[today]?.pillars ?? { body: false, mind: false, space: false, connection: false, pace: false, voice: false });
+  const ptCompleted = useStore(s => s.history[today]?.ptCompleted ?? false);
+  const advocacyLog = useStore(s => s.history[today]?.advocacyLog ?? '');
+  const energyAudits = useStore(s => s.history[today]?.energyAudits ?? []);
   const togglePillar = useStore(s => s.togglePillar);
   const setPT = useStore(s => s.setPT);
   const setAdvocacy = useStore(s => s.setAdvocacy);
   const addEnergyAudit = useStore(s => s.addEnergyAudit);
-  const currentDay = useMemo(() => history[today] || initialDaily(), [history, today]);
-  const pillars = currentDay.pillars;
-  const ptCompleted = currentDay.ptCompleted;
-  const advocacyLog = currentDay.advocacyLog;
-  const energyAudits = currentDay.energyAudits;
   const [newAudit, setNewAudit] = useState<{
     activity: string;
     type: 'Restored' | 'Depleted';

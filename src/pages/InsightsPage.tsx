@@ -5,9 +5,8 @@ import { cn } from '@/lib/utils';
 import { Flame, Activity, ScrollText, Calendar } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 export function InsightsPage() {
+  const currentStreak = useStore(s => s.streak.currentStreak);
   const history = useStore(s => s.history);
-  const streakObj = useStore(s => s.streak);
-  const currentStreak = streakObj.currentStreak;
   const journals = useStore(s => s.journals);
   const last7Days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -27,7 +26,11 @@ export function InsightsPage() {
     });
   }, [history]);
   const journalCount = useMemo(() => {
-    return Object.values(journals).filter(v => typeof v === 'string' ? v.length > 5 : Object.values(v).some(x => x.length > 5)).length;
+    return Object.values(journals).filter(v => {
+      if (typeof v === 'string') return v.length > 5;
+      if (v && typeof v === 'object') return Object.values(v).some(x => typeof x === 'string' && x.length > 5);
+      return false;
+    }).length;
   }, [journals]);
   const pillarTotal = useMemo(() => {
     return Object.values(history).reduce((acc, curr) => {
@@ -72,23 +75,23 @@ export function InsightsPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="display" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fontSize: 10, fill: '#888'}} 
+                <XAxis
+                  dataKey="display"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{fontSize: 10, fill: '#888'}}
                 />
                 <YAxis hide domain={[0, 4]} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   labelStyle={{ fontWeight: 'bold' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#534AB7" 
-                  fillOpacity={1} 
-                  fill="url(#colorPulse)" 
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#534AB7"
+                  fillOpacity={1}
+                  fill="url(#colorPulse)"
                   strokeWidth={2}
                 />
               </AreaChart>

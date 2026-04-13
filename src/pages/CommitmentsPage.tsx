@@ -7,16 +7,21 @@ import { useStore } from '@/lib/store';
 import { Target, Zap, Circle, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 export function CommitmentsPage() {
-  const journals = useStore(s => s.journals);
-  const updateJournal = useStore(s => s.updateJournal);
-  const warningSigns = useStore(s => s.warningSigns);
-  const addWarningSign = useStore(s => s.addWarningSign);
   const [activeTab, setActiveTab] = useState('weekly');
   const [newSign, setNewSign] = useState('');
   const today = useMemo(() => new Date(), []);
   const weekKey = useMemo(() => `${today.getFullYear()}-W${getISOWeek(today)}`, [today]);
   const monthKey = useMemo(() => `${today.getFullYear()}-${today.getMonth() + 1}`, [today]);
   const quarterKey = useMemo(() => `${today.getFullYear()}-Q${Math.floor(today.getMonth() / 3) + 1}`, [today]);
+  const weeklyJournal = useStore(s => s.journals.weekly[weekKey] ?? '');
+  const monthlyJournal = useStore(s => s.journals.monthly[monthKey] ?? '');
+  const quarterlyJournal = useStore(s => s.journals.quarterly[quarterKey] ?? '');
+  const patternsJournal = useStore(s => s.journals.patterns);
+  const circleJournal = useStore(s => s.journals.circle);
+  const narrative = useStore(s => s.journals.narrative);
+  const warningSigns = useStore(s => s.warningSigns);
+  const addWarningSign = useStore(s => s.addWarningSign);
+  const updateJournal = useStore(s => s.updateJournal);
   return (
     <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
       <div className="animate-fade-in flex flex-col min-h-full">
@@ -31,7 +36,7 @@ export function CommitmentsPage() {
               <span className="text-xs font-semibold uppercase tracking-widest opacity-80">Strategic Directive</span>
             </div>
             <p className="text-lg font-serif leading-tight">
-              I lead by prioritizing clarity over speed. My health is the infrastructure of my impact.
+              {narrative || 'I lead by prioritizing clarity over speed. My health is the infrastructure of my impact.'}
             </p>
           </div>
         </div>
@@ -58,7 +63,7 @@ export function CommitmentsPage() {
                 <Textarea
                   placeholder="Where did you over-commit?"
                   className="bg-gray-50 border-none rounded-2xl p-6 min-h-[150px] focus-visible:ring-0 text-base"
-                  value={journals.weekly[weekKey] || ''}
+                  value={weeklyJournal}
                   onChange={(e) => updateJournal('weekly', weekKey, e.target.value)}
                 />
               </div>
@@ -70,7 +75,7 @@ export function CommitmentsPage() {
                 <Textarea
                   placeholder="I am letting go of..."
                   className="bg-gray-50 border-none rounded-2xl p-6 min-h-[150px] focus-visible:ring-0 text-base"
-                  value={journals.monthly[monthKey] || ''}
+                  value={monthlyJournal}
                   onChange={(e) => updateJournal('monthly', monthKey, e.target.value)}
                 />
               </div>
@@ -81,7 +86,7 @@ export function CommitmentsPage() {
                 <Textarea
                   placeholder="This quarter was defined by..."
                   className="bg-gray-50 border-none rounded-2xl p-6 min-h-[150px] focus-visible:ring-0 text-base"
-                  value={journals.quarterly[quarterKey] || ''}
+                  value={quarterlyJournal}
                   onChange={(e) => updateJournal('quarterly', quarterKey, e.target.value)}
                 />
               </div>
@@ -124,7 +129,7 @@ export function CommitmentsPage() {
                 <Textarea
                   placeholder="What beliefs govern your work?"
                   className="bg-gray-50 border-none rounded-2xl p-6 min-h-[150px] focus-visible:ring-0 text-base"
-                  value={journals.patterns}
+                  value={patternsJournal}
                   onChange={(e) => updateJournal('patterns', '', e.target.value)}
                 />
               </div>
@@ -149,7 +154,7 @@ export function CommitmentsPage() {
                 <Textarea
                   placeholder="Who has held space for you lately?"
                   className="bg-gray-50 border-none rounded-2xl p-6 min-h-[150px] focus-visible:ring-0 text-base"
-                  value={journals.circle}
+                  value={circleJournal}
                   onChange={(e) => updateJournal('circle', '', e.target.value)}
                 />
               </div>

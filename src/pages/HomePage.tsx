@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { format } from 'date-fns';
 import { Sparkles, Bell, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -23,27 +23,24 @@ const AFFIRMATIONS = [
 ];
 export function HomePage() {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
-  const history = useStore(s => s.history);
+  const pulse = useStore(s => s.history[today]?.pulse ?? null);
+  const capacityPhysical = useStore(s => s.history[today]?.capacity.physical ?? 'Neutral');
+  const capacityEmotional = useStore(s => s.history[today]?.capacity.emotional ?? 'Neutral');
+  const capacityMental = useStore(s => s.history[today]?.capacity.mental ?? 'Neutral');
+  const capacityRelational = useStore(s => s.history[today]?.capacity.relational ?? 'Neutral');
+  const pillarsCount = useStore(s => Object.values(s.history[today]?.pillars ?? {}).filter(Boolean).length);
+  const ptCompleted = useStore(s => s.history[today]?.ptCompleted ?? false);
+  const energyCount = useStore(s => s.history[today]?.energyAudits.length ?? 0);
   const setPulse = useStore(s => s.setPulse);
   const setCapacity = useStore(s => s.setCapacity);
   const updateStreak = useStore(s => s.updateStreak);
   const notificationTime = useStore(s => s.notificationTime);
   const setNotificationTime = useStore(s => s.setNotificationTime);
   const [emblaRef] = useEmblaCarousel({ loop: true });
-  const currentDay = useMemo(() => history[today] || initialDaily(), [history, today]);
-  const pulse = currentDay.pulse;
-  const capacity = currentDay.capacity;
-  const pillars = currentDay.pillars;
-  const ptCompleted = currentDay.ptCompleted;
-  const energyCount = currentDay.energyAudits?.length || 0;
   const progress = useMemo(() => {
-    const completionCount = 
-      Object.values(pillars).filter(Boolean).length +
-      (ptCompleted ? 1 : 0) +
-      (energyCount > 0 ? 1 : 0) +
-      (pulse ? 1 : 0);
+    const completionCount = pillarsCount + (ptCompleted ? 1 : 0) + (energyCount > 0 ? 1 : 0) + (pulse ? 1 : 0);
     return (completionCount / 9) * 100;
-  }, [pillars, ptCompleted, energyCount, pulse]);
+  }, [pillarsCount, ptCompleted, energyCount, pulse]);
   const greeting = useMemo(() => {
     const hours = new Date().getHours();
     if (hours < 12) return 'Good Morning';
@@ -54,9 +51,10 @@ export function HomePage() {
     setPulse(today, p);
     updateStreak(today);
   };
-  const handleCapacityToggle = (key: keyof typeof capacity) => {
+  const handleCapacityToggle = (key: 'physical' | 'emotional' | 'mental' | 'relational') => {
     const cycle: CapacityState[] = ['Neutral', 'Restored', 'Deficit'];
-    const current = capacity[key];
+    const currentMap = { physical: capacityPhysical, emotional: capacityEmotional, mental: capacityMental, relational: capacityRelational };
+    const current = currentMap[key];
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     setCapacity(today, { [key]: next });
   };
@@ -112,19 +110,24 @@ export function HomePage() {
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Capacity Snapshot</h2>
           <div className="grid grid-cols-2 gap-3">
-            {(['physical', 'emotional', 'mental', 'relational'] as const).map((key) => (
+            {[
+              { key: 'physical', label: 'physical', val: capacityPhysical },
+              { key: 'emotional', label: 'emotional', val: capacityEmotional },
+              { key: 'mental', label: 'mental', val: capacityMental },
+              { key: 'relational', label: 'relational', val: capacityRelational }
+            ].map((item) => (
               <button
-                key={key}
-                onClick={() => handleCapacityToggle(key)}
+                key={item.key}
+                onClick={() => handleCapacityToggle(item.key as any)}
                 className={cn(
                   "p-4 rounded-xl border-[0.5px] flex flex-col items-center justify-center gap-2 transition-all active:scale-95",
-                  capacity[key] === 'Restored' ? "bg-assata-teal-bg border-assata-teal/30 text-assata-teal" :
-                  capacity[key] === 'Deficit' ? "bg-assata-coral-bg border-assata-coral/30 text-assata-coral" :
+                  item.val === 'Restored' ? "bg-assata-teal-bg border-assata-teal/30 text-assata-teal" :
+                  item.val === 'Deficit' ? "bg-assata-coral-bg border-assata-coral/30 text-assata-coral" :
                   "bg-gray-50 border-border text-muted-foreground"
                 )}
               >
-                <span className="text-[10px] uppercase font-bold tracking-wider">{key}</span>
-                <span className="text-sm font-medium">{capacity[key]}</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider">{item.label}</span>
+                <span className="text-sm font-medium">{item.val}</span>
               </button>
             ))}
           </div>
