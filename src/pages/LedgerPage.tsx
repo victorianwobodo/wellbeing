@@ -12,12 +12,13 @@ const COST_AREAS = [
 export function LedgerPage() {
   const today = useMemo(() => new Date(), []);
   const quarter = useMemo(() => `${today.getFullYear()}-Q${Math.floor(today.getMonth() / 3) + 1}`, [today]);
+  // Strict Primitive Selectors for the current quarter ledger
   const capacityEvidence = useStore(s => s.ledger[quarter]?.capacityEvidence ?? {});
   const capacityStatus = useStore(s => s.ledger[quarter]?.capacityStatus ?? {});
   const costs = useStore(s => s.ledger[quarter]?.costs ?? {});
   const worthBeliefs = useStore(s => s.ledger[quarter]?.worthBeliefs ?? []);
   const worthOrigin = useStore(s => s.ledger[quarter]?.worthOrigin ?? '');
-  const historyEntries = useStore(s => Object.entries(s.history));
+  const history = useStore(s => s.history);
   const updateLedger = useStore(s => s.updateLedger);
   const handleStatusToggle = (key: string) => {
     const cycle = ['Uncertain', 'Yes', 'No'] as const;
@@ -32,10 +33,10 @@ export function LedgerPage() {
     updateLedger(quarter, { costs: { ...costs, [area]: next } });
   };
   const recentHistory = useMemo(() => {
-    return historyEntries
+    return Object.entries(history)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .slice(0, 15);
-  }, [historyEntries]);
+  }, [history]);
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12 space-y-12 animate-fade-in">
@@ -145,10 +146,10 @@ export function LedgerPage() {
               <div key={date} className="bg-white border-[0.5px] border-border p-4 rounded-xl flex items-center justify-between">
                 <span className="text-xs font-bold text-muted-foreground">{format(new Date(date), 'MMM d')}</span>
                 <div className="flex gap-1">
-                  {data.energyAudits.map(audit => (
+                  {(data as any).energyAudits?.map((audit: any) => (
                     <div key={audit.id} className={cn("w-2 h-2 rounded-full", audit.type === 'Restored' ? 'bg-assata-teal' : 'bg-assata-coral')} />
                   ))}
-                  {data.energyAudits.length === 0 && <div className="w-2 h-2 rounded-full bg-gray-100" />}
+                  {((data as any).energyAudits?.length ?? 0) === 0 && <div className="w-2 h-2 rounded-full bg-gray-100" />}
                 </div>
               </div>
             ))}

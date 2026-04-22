@@ -7,7 +7,13 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export function InsightsPage() {
   const currentStreak = useStore(s => s.streak.currentStreak);
   const history = useStore(s => s.history);
-  const journals = useStore(s => s.journals);
+  // Select primitive fragments for journal count logic
+  const weeklyJournals = useStore(s => s.journals.weekly);
+  const monthlyJournals = useStore(s => s.journals.monthly);
+  const quarterlyJournals = useStore(s => s.journals.quarterly);
+  const patternsJournal = useStore(s => s.journals.patterns);
+  const circleJournal = useStore(s => s.journals.circle);
+  const narrativeJournal = useStore(s => s.journals.narrative);
   const last7Days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = subDays(new Date(), 6 - i);
@@ -26,15 +32,18 @@ export function InsightsPage() {
     });
   }, [history]);
   const journalCount = useMemo(() => {
-    return Object.values(journals).filter(v => {
-      if (typeof v === 'string') return v.length > 5;
-      if (v && typeof v === 'object') return Object.values(v).some(x => typeof x === 'string' && x.length > 5);
-      return false;
-    }).length;
-  }, [journals]);
+    let count = 0;
+    if (patternsJournal?.length > 5) count++;
+    if (circleJournal?.length > 5) count++;
+    if (narrativeJournal?.length > 5) count++;
+    count += Object.values(weeklyJournals).filter(v => v.length > 5).length;
+    count += Object.values(monthlyJournals).filter(v => v.length > 5).length;
+    count += Object.values(quarterlyJournals).filter(v => v.length > 5).length;
+    return count;
+  }, [weeklyJournals, monthlyJournals, quarterlyJournals, patternsJournal, circleJournal, narrativeJournal]);
   const pillarTotal = useMemo(() => {
     return Object.values(history).reduce((acc, curr) => {
-      return acc + Object.values(curr.pillars).filter(Boolean).length;
+      return acc + Object.values(curr.pillars || {}).filter(Boolean).length;
     }, 0);
   }, [history]);
   return (

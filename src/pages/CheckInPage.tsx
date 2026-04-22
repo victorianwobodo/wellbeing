@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { useStore, PillarId, EnergyAudit } from '@/lib/store';
+import { useStore, PillarId } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { Check, ExternalLink, Zap, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +17,13 @@ const PILLARS: { id: PillarId; label: string; color: string; sub: string }[] = [
 ];
 export function CheckInPage() {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
-  const pillars = useStore(s => s.history[today]?.pillars ?? { body: false, mind: false, space: false, connection: false, pace: false, voice: false });
+  // Strict Primitive Selectors
+  const pillarBody = useStore(s => s.history[today]?.pillars?.body ?? false);
+  const pillarMind = useStore(s => s.history[today]?.pillars?.mind ?? false);
+  const pillarSpace = useStore(s => s.history[today]?.pillars?.space ?? false);
+  const pillarConnection = useStore(s => s.history[today]?.pillars?.connection ?? false);
+  const pillarPace = useStore(s => s.history[today]?.pillars?.pace ?? false);
+  const pillarVoice = useStore(s => s.history[today]?.pillars?.voice ?? false);
   const ptCompleted = useStore(s => s.history[today]?.ptCompleted ?? false);
   const advocacyLog = useStore(s => s.history[today]?.advocacyLog ?? '');
   const energyAudits = useStore(s => s.history[today]?.energyAudits ?? []);
@@ -30,6 +36,14 @@ export function CheckInPage() {
     type: 'Restored' | 'Depleted';
     action: 'Keep' | 'Modify' | 'Release';
   }>({ activity: '', type: 'Restored', action: 'Keep' });
+  const pillarStates: Record<PillarId, boolean> = {
+    body: pillarBody,
+    mind: pillarMind,
+    space: pillarSpace,
+    connection: pillarConnection,
+    pace: pillarPace,
+    voice: pillarVoice,
+  };
   const handleSaveAudit = () => {
     if (!newAudit.activity.trim()) return;
     addEnergyAudit(today, newAudit);
@@ -41,7 +55,6 @@ export function CheckInPage() {
     window.location.href = 'limber://checkin';
     setTimeout(() => window.open('https://limberjack.com', '_blank'), 2000);
   };
-
   const handleSaveAll = () => {
     toast.success('Daily check-in saved ✓');
   };
@@ -62,7 +75,7 @@ export function CheckInPage() {
                 className={cn(
                   "p-4 rounded-2xl flex flex-col justify-between items-start h-32 border-[0.5px] transition-all border-transparent text-left",
                   p.color,
-                  pillars[p.id] && "ring-2 ring-primary ring-offset-2 border-primary/20"
+                  pillarStates[p.id] && "ring-2 ring-primary ring-offset-2 border-primary/20"
                 )}
               >
                 <div>
@@ -70,7 +83,7 @@ export function CheckInPage() {
                   <p className="text-[10px] opacity-60 font-medium">{p.sub}</p>
                 </div>
                 <div className="w-full flex justify-end">
-                  {pillars[p.id] && (
+                  {pillarStates[p.id] && (
                     <div className="bg-primary rounded-full p-1">
                       <Check className="w-3 h-3 text-white" />
                     </div>
