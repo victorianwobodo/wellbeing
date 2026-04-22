@@ -7,7 +7,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export function InsightsPage() {
   const currentStreak = useStore(s => s.streak.currentStreak);
   const history = useStore(s => s.history);
-  // Select primitive fragments for journal count logic
   const weeklyJournals = useStore(s => s.journals.weekly);
   const monthlyJournals = useStore(s => s.journals.monthly);
   const quarterlyJournals = useStore(s => s.journals.quarterly);
@@ -33,16 +32,16 @@ export function InsightsPage() {
   }, [history]);
   const journalCount = useMemo(() => {
     let count = 0;
-    if (patternsJournal?.length > 5) count++;
-    if (circleJournal?.length > 5) count++;
-    if (narrativeJournal?.length > 5) count++;
-    count += Object.values(weeklyJournals).filter(v => v.length > 5).length;
-    count += Object.values(monthlyJournals).filter(v => v.length > 5).length;
-    count += Object.values(quarterlyJournals).filter(v => v.length > 5).length;
+    if ((patternsJournal?.length || 0) > 5) count++;
+    if ((circleJournal?.length || 0) > 5) count++;
+    if ((narrativeJournal?.length || 0) > 5) count++;
+    count += Object.values(weeklyJournals || {}).filter(v => (v?.length || 0) > 5).length;
+    count += Object.values(monthlyJournals || {}).filter(v => (v?.length || 0) > 5).length;
+    count += Object.values(quarterlyJournals || {}).filter(v => (v?.length || 0) > 5).length;
     return count;
   }, [weeklyJournals, monthlyJournals, quarterlyJournals, patternsJournal, circleJournal, narrativeJournal]);
   const pillarTotal = useMemo(() => {
-    return Object.values(history).reduce((acc, curr) => {
+    return Object.values(history || {}).reduce((acc, curr) => {
       return acc + Object.values(curr.pillars || {}).filter(Boolean).length;
     }, 0);
   }, [history]);

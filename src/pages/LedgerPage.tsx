@@ -12,12 +12,14 @@ const COST_AREAS = [
 export function LedgerPage() {
   const today = useMemo(() => new Date(), []);
   const quarter = useMemo(() => `${today.getFullYear()}-Q${Math.floor(today.getMonth() / 3) + 1}`, [today]);
-  // Strict Primitive Selectors for the current quarter ledger
-  const capacityEvidence = useStore(s => s.ledger[quarter]?.capacityEvidence ?? {});
-  const capacityStatus = useStore(s => s.ledger[quarter]?.capacityStatus ?? {});
-  const costs = useStore(s => s.ledger[quarter]?.costs ?? {});
-  const worthBeliefs = useStore(s => s.ledger[quarter]?.worthBeliefs ?? []);
-  const worthOrigin = useStore(s => s.ledger[quarter]?.worthOrigin ?? '');
+  // Selector returns primitive/reference from store
+  const rawLedger = useStore(s => s.ledger[quarter]);
+  // Handle fallbacks locally during render to keep selectors stable
+  const capacityEvidence = rawLedger?.capacityEvidence ?? {};
+  const capacityStatus = rawLedger?.capacityStatus ?? {};
+  const costs = rawLedger?.costs ?? {};
+  const worthBeliefs = rawLedger?.worthBeliefs ?? [];
+  const worthOrigin = rawLedger?.worthOrigin ?? '';
   const history = useStore(s => s.history);
   const updateLedger = useStore(s => s.updateLedger);
   const handleStatusToggle = (key: string) => {
@@ -153,15 +155,6 @@ export function LedgerPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-        <section className="pb-10">
-          <div className="bg-assata-purple p-8 rounded-[32px] text-white space-y-4 relative overflow-hidden">
-            <HelpCircle className="absolute -right-4 -top-4 w-32 h-32 opacity-10" />
-            <h3 className="text-lg font-serif italic text-white/90">Reframing Success</h3>
-            <p className="text-sm leading-relaxed opacity-80">
-              Success is not the volume of what you deliver, but the health of the system that delivers it. Does your current ledger show a sustainable profit, or are you operating on high-interest debt?
-            </p>
           </div>
         </section>
       </div>

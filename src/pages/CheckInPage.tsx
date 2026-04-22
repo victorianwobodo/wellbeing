@@ -17,7 +17,6 @@ const PILLARS: { id: PillarId; label: string; color: string; sub: string }[] = [
 ];
 export function CheckInPage() {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
-  // Strict Primitive Selectors
   const pillarBody = useStore(s => s.history[today]?.pillars?.body ?? false);
   const pillarMind = useStore(s => s.history[today]?.pillars?.mind ?? false);
   const pillarSpace = useStore(s => s.history[today]?.pillars?.space ?? false);
@@ -26,7 +25,9 @@ export function CheckInPage() {
   const pillarVoice = useStore(s => s.history[today]?.pillars?.voice ?? false);
   const ptCompleted = useStore(s => s.history[today]?.ptCompleted ?? false);
   const advocacyLog = useStore(s => s.history[today]?.advocacyLog ?? '');
-  const energyAudits = useStore(s => s.history[today]?.energyAudits ?? []);
+  // selector returning a primitive (the actual reference from state, not a fallback literal)
+  const energyAuditsRaw = useStore(s => s.history[today]?.energyAudits);
+  const energyAudits = energyAuditsRaw ?? [];
   const togglePillar = useStore(s => s.togglePillar);
   const setPT = useStore(s => s.setPT);
   const setAdvocacy = useStore(s => s.setAdvocacy);
