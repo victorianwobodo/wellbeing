@@ -1,6 +1,6 @@
 # Cloudflare Workers React Template
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/victorianwobodo/wellbeing)
 
 A production-ready full-stack template for building modern web applications using **Cloudflare Workers**, **Durable Objects**, **React**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui**. This template provides a scalable backend with stateful entities (e.g., Users, Chats) and a beautiful, responsive frontend.
 
@@ -102,7 +102,7 @@ bun run deploy
 
 This builds the frontend, bundles the Worker, and deploys via Wrangler.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/victorianwobodo/wellbeing)
 
 **Post-Deploy**:
 ```bash
